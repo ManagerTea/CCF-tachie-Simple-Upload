@@ -139,36 +139,29 @@
         }
     `);
 
-    // 目标元素选择器
     const TARGET_BUTTON_SELECTOR = 'button.MuiButton-root.MuiButton-text.MuiButton-textWhite';
     const UPLOAD_BUTTON_SELECTOR = 'button.MuiIconButton-root.MuiIconButton-edgeEnd.MuiIconButton-sizeLarge';
     const IMAGE_CONTAINER_SELECTOR = 'div.sc-joaiei.kHFtPO';
     const FINAL_BUTTON_SELECTOR = 'form div.MuiToolbar-root.MuiToolbar-dense button';
     const EXTRA_BUTTON_SELECTOR = 'body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-16u656j > div > div.MuiDialogContent-root.css-1ty026z > form > div:nth-child(2) > div.MuiToolbar-root.MuiToolbar-dense.css-mjywep > button';
 
-    // 存储用户选择的文件名
     let selectedFileName = '';
     let fileSelectionObserver = null;
 
-    // 获取或设置默认等待时间
     let imageLoadWaitTime = GM_getValue('imageLoadWaitTime', 20000);
 
-    // 创建状态显示元素
     const statusDiv = document.createElement('div');
     statusDiv.className = 'upload-status';
     statusDiv.style.display = 'none';
     document.body.appendChild(statusDiv);
 
-    // 创建设置UI
     function createSettingsUI() {
-        // 设置齿轮图标
         const settingsGear = document.createElement('div');
         settingsGear.className = 'settings-gear';
         settingsGear.innerHTML = '⚙️';
         settingsGear.title = '打开设置';
         document.body.appendChild(settingsGear);
 
-        // 设置面板
         const settingsPanel = document.createElement('div');
         settingsPanel.className = 'settings-panel';
         settingsPanel.innerHTML = `
@@ -184,18 +177,15 @@
         `;
         document.body.appendChild(settingsPanel);
 
-        // 设置遮罩层
         const settingsOverlay = document.createElement('div');
         settingsOverlay.className = 'settings-overlay';
         document.body.appendChild(settingsOverlay);
 
-        // 显示设置面板
         settingsGear.addEventListener('click', function() {
             settingsPanel.style.display = 'block';
             settingsOverlay.style.display = 'block';
         });
 
-        // 关闭设置面板
         settingsPanel.querySelector('.settings-close').addEventListener('click', function() {
             settingsPanel.style.display = 'none';
             settingsOverlay.style.display = 'none';
@@ -206,7 +196,6 @@
             settingsOverlay.style.display = 'none';
         });
 
-        // 保存设置
         settingsPanel.querySelector('.settings-save').addEventListener('click', function() {
             const waitTimeInput = document.getElementById('waitTime');
             const newWaitTime = parseInt(waitTimeInput.value, 10);
@@ -225,26 +214,22 @@
             }
         });
 
-        // 添加油猴菜单命令
         GM_registerMenuCommand("上传设置", function() {
             settingsPanel.style.display = 'block';
             settingsOverlay.style.display = 'block';
         });
     }
 
-    // 更新状态显示
     function updateStatus(message) {
         statusDiv.textContent = message;
         statusDiv.style.display = 'block';
         console.log('上传状态:', message);
 
-        // 3秒后自动隐藏状态消息
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, 3000);
     }
 
-    // 创建快速上传按钮
     function createQuickUploadButton() {
         const quickUploadBtn = document.createElement('a');
         quickUploadBtn.className = 'quick-upload-btn';
@@ -254,25 +239,21 @@
         return quickUploadBtn;
     }
 
-    // 查找目标按钮并插入快速上传按钮
     function insertQuickUploadButton() {
         // 使用更通用的选择器查找目标按钮
         const targetButtons = document.querySelectorAll(TARGET_BUTTON_SELECTOR);
 
         for (const targetButton of targetButtons) {
-            // 检查按钮文本是否匹配
             if (targetButton.textContent.includes('Select for delete') ||
                 targetButton.textContent.includes('选择删除') ||
                 targetButton.textContent.includes('選択削除')) {
 
-                // 检查是否已经添加了按钮
                 if (!targetButton.previousElementSibling || !targetButton.previousElementSibling.classList.contains('quick-upload-btn')) {
                     const quickUploadBtn = createQuickUploadButton();
                     targetButton.parentNode.insertBefore(quickUploadBtn, targetButton);
 
                     console.log('已添加快速上传按钮');
 
-                    // 添加点击事件
                     quickUploadBtn.addEventListener('click', function() {
                         handleQuickUpload();
                     });
@@ -283,31 +264,25 @@
         }
     }
 
-    // 处理快速上传
     function handleQuickUpload() {
-        // 查找上传按钮
         const uploadButtons = document.querySelectorAll(UPLOAD_BUTTON_SELECTOR);
 
         for (const uploadButton of uploadButtons) {
-            // 检查按钮是否包含AddIcon
             const svg = uploadButton.querySelector('svg[data-testid="AddIcon"]');
             if (svg) {
                 uploadButton.click();
                 console.log('已点击上传按钮');
 
-                // 监听文件选择对话框
                 listenForFileSelection();
                 break;
             }
         }
     }
 
-    // 监听文件选择对话框
     function listenForFileSelection() {
         // 先检查是否已经有文件选择输入框
         checkForFileInputs();
 
-        // 设置观察器监听DOM变化
         if (fileSelectionObserver) {
             fileSelectionObserver.disconnect();
         }
@@ -323,7 +298,6 @@
             attributeFilter: ['style', 'class']
         });
 
-        // 设置超时
         setTimeout(() => {
             if (fileSelectionObserver) {
                 fileSelectionObserver.disconnect();
@@ -335,35 +309,28 @@
         }, 8000);
     }
 
-    // 检查文件输入框
     function checkForFileInputs() {
-        // 查找所有文件输入框
         const fileInputs = document.querySelectorAll('input[type="file"]');
 
         for (const input of fileInputs) {
-            // 检查输入框是否可见
             const style = window.getComputedStyle(input);
             if (style.display !== 'none' && style.visibility !== 'hidden') {
                 console.log('检测到可见的文件选择输入框');
 
-                // 检查是否已经添加了监听器
                 if (!input.hasAttribute('data-quick-upload-listener')) {
                     input.setAttribute('data-quick-upload-listener', 'true');
 
-                    // 监听文件选择变化
                     input.addEventListener('change', function(e) {
                         if (this.files && this.files.length > 0) {
                             selectedFileName = this.files[0].name;
                             console.log('已选择文件:', selectedFileName);
                             updateStatus(`已选择文件: ${selectedFileName}`);
 
-                            // 停止观察
                             if (fileSelectionObserver) {
                                 fileSelectionObserver.disconnect();
                                 fileSelectionObserver = null;
                             }
 
-                            // 开始处理上传
                             processUpload();
                         }
                     });
@@ -372,31 +339,26 @@
             }
         }
 
-        // 检查对话框或弹出窗口
         const dialogs = document.querySelectorAll('div[role="dialog"], .MuiDialog-root, .MuiModal-root');
         for (const dialog of dialogs) {
             const style = window.getComputedStyle(dialog);
             if (style.display !== 'none' && style.visibility !== 'hidden') {
-                // 在对话框中查找文件输入框
                 const dialogFileInputs = dialog.querySelectorAll('input[type="file"]');
                 for (const input of dialogFileInputs) {
                     if (!input.hasAttribute('data-quick-upload-listener')) {
                         input.setAttribute('data-quick-upload-listener', 'true');
 
-                        // 监听文件选择变化
                         input.addEventListener('change', function(e) {
                             if (this.files && this.files.length > 0) {
                                 selectedFileName = this.files[0].name;
                                 console.log('已选择文件:', selectedFileName);
                                 updateStatus(`已选择文件: ${selectedFileName}`);
 
-                                // 停止观察
                                 if (fileSelectionObserver) {
                                     fileSelectionObserver.disconnect();
                                     fileSelectionObserver = null;
                                 }
 
-                                // 开始处理上传
                                 processUpload();
                             }
                         });
@@ -406,7 +368,6 @@
         }
     }
 
-    // 处理上传流程
     async function processUpload() {
         if (!selectedFileName) {
             updateStatus('错误: 未选择文件');
@@ -416,24 +377,18 @@
         updateStatus('开始处理文件上传...');
 
         try {
-            // 处理可能的压缩提示
             await handleCompressionPrompt();
 
-            // 等待图片加载完成
             const img = await waitForImageLoad(selectedFileName);
 
             if (img) {
-                // 点击图片
                 img.click();
                 console.log(`已点击图片: ${selectedFileName}`);
 
-                // 填写文件名到输入框
                 await findAndFillFileName(selectedFileName);
 
-                // 点击额外按钮
                 await clickExtraButton();
 
-                // 点击最终按钮
                 await clickFinalButton();
 
                 updateStatus('文件上传处理完成');
@@ -444,10 +399,8 @@
         }
     }
 
-    // 处理压缩提示
     function handleCompressionPrompt() {
         return new Promise((resolve) => {
-            // 监听提示出现
             const promptObserver = new MutationObserver((mutations, observer) => {
                 const prompts = document.querySelectorAll('div, span, p, button');
                 for (const element of prompts) {
@@ -455,7 +408,6 @@
                         element.textContent.includes('文件大小超过1MB')) {
                         console.log('检测到压缩提示');
 
-                        // 查找取消按钮
                         const buttons = document.querySelectorAll('button');
                         for (const button of buttons) {
                             if (button.textContent.includes('取消') ||
@@ -478,7 +430,6 @@
                 characterData: true
             });
 
-            // 设置超时，如果没有提示则继续
             setTimeout(() => {
                 promptObserver.disconnect();
                 console.log('未检测到压缩提示，继续执行');
@@ -487,18 +438,16 @@
         });
     }
 
-    // 等待图片加载完成
     function waitForImageLoad(fileName) {
         return new Promise((resolve) => {
             const startTime = Date.now();
-            const maxWait = imageLoadWaitTime; // 使用用户设置的等待时间
+            const maxWait = imageLoadWaitTime; 
 
             function checkImage() {
                 const containers = document.querySelectorAll(IMAGE_CONTAINER_SELECTOR);
                 for (const container of containers) {
                     const images = container.querySelectorAll('img');
                     for (const img of images) {
-                        // 检查图片是否已加载且alt或src包含文件名
                         if (img.complete && (img.alt.includes(fileName) || img.src.includes(fileName) ||
                             fileName.includes(img.alt) || fileName.includes(img.src))) {
                             console.log(`图片已加载: ${fileName}`);
@@ -521,28 +470,23 @@
         });
     }
 
-    // 查找并填写文件名到输入框
     function findAndFillFileName(fileName) {
         return new Promise((resolve) => {
             const startTime = Date.now();
-            const maxWait = 10000; // 最多等待10秒
+            const maxWait = 10000; 
 
             function checkInput() {
-                // 查找所有符合特征的输入框
                 const inputs = document.querySelectorAll('input[type="text"]');
                 let targetInput = null;
 
                 for (const input of inputs) {
-                    // 检查输入框的特征
                     const hasFacesName = input.name && input.name.startsWith('faces.');
                     const hasCorrectPlaceholder = input.placeholder && input.placeholder.includes('表情名');
                     const hasMuiInputClass = input.className.includes('MuiInputBase-input') &&
                                            input.className.includes('MuiInput-input');
 
-                    // 检查输入框是否可见
                     const isVisible = input.offsetParent !== null;
 
-                    // 检查输入框是否为空或包含默认值
                     const isEmptyOrDefault = input.value === '' || input.value === input.placeholder;
 
                     if (hasFacesName && hasCorrectPlaceholder && hasMuiInputClass && isVisible && isEmptyOrDefault) {
@@ -552,7 +496,6 @@
                 }
 
                 if (targetInput) {
-                    // 生成文件名（去掉后缀，前面加@）
                     const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
                     const newName = `@${fileNameWithoutExt}`;
 
@@ -575,7 +518,6 @@
         });
     }
 
-    // 点击额外按钮
     function clickExtraButton() {
         return new Promise((resolve) => {
             const buttons = document.querySelectorAll(EXTRA_BUTTON_SELECTOR);
@@ -595,7 +537,6 @@
         });
     }
 
-    // 点击最终按钮
     function clickFinalButton() {
         return new Promise((resolve) => {
             const buttons = document.querySelectorAll(FINAL_BUTTON_SELECTOR);
@@ -609,7 +550,6 @@
                 }
             }
 
-            // 尝试通过文本内容查找按钮
             const allButtons = document.querySelectorAll('button');
             for (const button of allButtons) {
                 if (button.textContent.includes('确定') ||
@@ -631,7 +571,6 @@
         });
     }
 
-    // 使用MutationObserver监听DOM变化
     const observer = new MutationObserver(function(mutations) {
         insertQuickUploadButton();
     });
